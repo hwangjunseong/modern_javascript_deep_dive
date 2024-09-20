@@ -82,3 +82,19 @@ bar(); //1
 //bar 함수의 상위 스코프가 무엇인지에 따라 결정됨
 //1. 함수를 어디서 호출했는지에 따라 함수의 상위 스코프를 결정한다
 //2. 함수를 어디서 정의했는지에 따라 함수의 상위 스코프를 결정한다
+
+console.log("================================");
+//전역 함수
+function foo() {
+  console.log("global function foo");
+}
+function bar() {
+  foo(); //local function foo
+
+  //중첩 함수
+  function foo() {
+    console.log("local function foo");
+  }
+  foo(); //local function foo
+}
+bar();
