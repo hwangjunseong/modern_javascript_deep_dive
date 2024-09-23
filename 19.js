@@ -461,3 +461,366 @@ console.log(me1.constructor === Object); //false
 console.log(Person9.prototype === Object.getPrototypeOf(me1)); //true
 
 //instanceof 연산자
+function PersonIn(name) {
+  this.name = name;
+}
+const meIn = new PersonIn("lee");
+//PersonIn.prototype이 meIn 객체의 프로토타입 체인 상에 존재 => true로 평가됨
+console.log(meIn instanceof PersonIn); //true
+//Object.prototype이 meIn 객체의 프로토타입 체인 상에 존재 => true로 평가됨
+console.log(meIn instanceof Object); //true
+
+//instanceof의 연산자 동작이해를 위해 프로토타입 교체
+//프로토타입으로 교체할 객체
+const parentIn = {};
+
+//프로토타입의 교체
+Object.setPrototypeOf(meIn, parentIn);
+
+//PersonIn 생성자 함수와 parentIn 생성자 객체는 연결되어있지 않음
+console.log(PersonIn.prototype === parentIn); //false
+console.log(parentIn.constructor === PersonIn); //false
+
+//PersonIn.prototype이 meIn 객체의 프로토타입 체인 상에 존재 안해서 false로 평가됨 => 프로토타입 교체해서
+console.log(meIn instanceof PersonIn); //false
+
+//Object.prototype이 meIn 객체의 프로토타입 체인 상에 존재하므로 true로 평가됨
+console.log(meIn instanceof Object); //true
+
+//parentIn 객체를 PersonIn 생성자 함수의 prototype 프로퍼티에 바인딩함
+PersonIn.prototype = parentIn;
+//PersonIn.prototype이 meIn 객체의 프로토타입 체인 상에 존재해서 true로 평가됨
+console.log(meIn instanceof PersonIn); //true
+
+//instanceof 함수
+function isInstanceof(instance, constructor) {
+  //프로토타입 취득
+  const prototype = Object.getPrototypeOf(instance);
+
+  //재귀 탈출 조건
+  //prototype이 null이면 프로토타입 체인의 종점에 도달한 거
+  if (prototype === null) return false;
+
+  //프로토타입이 생성자 함수의 prototype 프로퍼티에 바인딩된 객체라면 true 반환
+  //else => 재귀 호출로 프로토타입 체인 상의 상위 프로토타입으로 이동하여 확인함
+  return (
+    prototype === constructor.prototype || isInstanceof(prototype, constructor)
+  );
+}
+console.log(isInstanceof(meIn, PersonIn)); //true
+console.log(isInstanceof(meIn, Object)); //true
+console.log(isInstanceof(meIn, Array)); //false
+
+const Person0 = (function () {
+  function Person0(name) {
+    this.name = name;
+  }
+
+  //생성자 함수의 prototype 프로퍼티를 통해 프로토타입 교체
+  Person0.prototype = {
+    sayHello() {
+      console.log(`hi! my name is ${this.name}`);
+    },
+  };
+  return Person0;
+})();
+const mei = new Person0("Lee");
+
+// constructor 프로퍼티와 생성자 함수 간의 연결이 파괴되어도  instanceof는 영항 받지 않음
+console.log(mei.constructor === Person0); //false
+console.log(mei.constructor === Object); //true
+
+//Person0.prototype이 mei객체의 프로토타입 체인 상에 존재해서 true로 평가됨
+console.log(mei instanceof Person0); //true
+
+//Object.prototype이 mei객체의 프로토타입 체인 상에 존재해서 true로 평가됨
+console.log(mei instanceof Object); //true
+
+//직접 상속
+//프로토타입이 null인 객체 생성. 생성된 객체는 프로토타입 체인의 종점에 위치함
+//obj7 -> null
+let obj7 = Object.create(null); //두 번째 인수 생략한거
+console.log(Object.getPrototypeOf(obj7) === null); //true
+//Object.prototype을 상속받지 못함
+// console.log(obj7.toString()); //TypeError: obj7.toString is not a function
+
+//obj7 -> Object.prototype -> null (프로토타입 체인 관계)
+//obj7은 {}과 동일
+obj7 = Object.create(Object.prototype);
+console.log(Object.getPrototypeOf(obj7) === Object.prototype); //true
+
+//obj7 -> Object.prototype -> null
+//obj7은 {x: 1}과 동일
+obj7 = Object.create(Object.prototype, {
+  x: { value: 1, writable: true, enumerable: true, configurable: true },
+});
+console.log(obj7); //{ x: 1 }
+console.log(obj7.x); //1
+
+//데이터 프러퍼티 정의 => 디스크립터
+//위 아래 동일
+obj7 = Object.create(Object.prototype);
+obj7.x = 1;
+console.log(obj7); //{ x: 1 }
+console.log(obj7.x); //1
+
+console.log(Object.getPrototypeOf(obj7) === Object.prototype); //true
+
+const myProto = { x: 10 };
+//임의의 객체를 직접 상속받음
+//obj7 -> myProto -> Object.prototype -> null
+obj7 = Object.create(myProto);
+console.log(obj7); //{}
+console.log(obj7.x); //10
+console.log(Object.getPrototypeOf(obj7) === myProto); //true
+
+//생성자 함수
+function PersonInheri(name) {
+  this.name = name;
+}
+
+//obj7 -> PersonInheri.prototype -> Object.prototype -> null
+//obj7 = new PersonInheri("lee")와 동일
+obj7 = Object.create(PersonInheri.prototype);
+obj7.name = "lee";
+console.log(obj7.name); //lee
+console.log(Object.getPrototypeOf(obj7) === PersonInheri.prototype); //true
+
+const objend = { a: 1 };
+objend.hasOwnProperty("a"); // true;
+// objend.propertyIsEnumberable("a"); //TypeError: objend.propertyIsEnumberable is not a function
+
+//프로토타입이 null인 객체, 프로토타입 체인의 종점에 위치하는 객체 생성
+const objEnd1 = Object.create(null);
+objEnd1.a = 1;
+console.log(Object.getPrototypeOf(objEnd1) === null); //true
+
+//objend는 Object.prototype의 빌트인 메서드 사용 불가
+// console.log(objEnd1.hasOwnProperty("a")); //TypeError: objEnd1.hasOwnProperty is not a function
+
+//Object.prototype의 빌트인 메서드는 객체를 직접 호출하지 않음
+console.log(Object.prototype.hasOwnProperty.call(objEnd1, "a")); //true
+
+const myPrototype = { x: 10 };
+//객체 리터럴에 의해 객체를 생성하면서 프로토타입을 지정하여 직접 상속받기 가능
+const obj0 = {
+  y: 20,
+  //객체를 직접 상속받음
+  //obj0 -> myPrototype -> Object.prototype -> null
+  __proto__: myPrototype,
+};
+//위 아래 동일
+const obj00 = Object.create(myPrototype, {
+  y: { value: 20, writable: true, enumerable: true, configurable: true },
+});
+console.log(obj0.x, obj0.y); //10 , 20
+console.log(Object.getPrototypeOf(obj0) === myPrototype); //true
+
+//정적 프로퍼티/메서드
+//생성자 함수
+function PersonStatic(name) {
+  this.name = name;
+}
+//프로토타입 메서드
+PersonStatic.prototype.sayHello = function () {
+  console.log(`hi my name is ${this.name}`);
+};
+//정적 프로퍼티
+PersonStatic.staticProp = "static prop";
+//정적 메서드
+PersonStatic.staticMethod = function () {
+  console.log("staticMethod");
+};
+const meStatic = new PersonStatic("Lee");
+//생성자 함수에 추가한 정적 프로퍼티/메서드는 생성자 함수로 참조/호출함
+PersonStatic.staticMethod(); //staticMethod
+//정적 프로퍼티/메서드는 생성자 함수가 생성한 인스턴스로 참조/호출 불가
+//인스턴스로 참조/호출할 수 있는 프로퍼티/메서드는 프로토타입 체인 상에 존재해야 함
+// meStaic.staticMethod(); //TypeError: meStaic.staticMethod is not a function
+meStatic.sayHello(); //hi my name is Lee
+console.log(meStatic.staticProp); //undefined
+
+//Object.create는 정적 메서드
+const objst = Object.create({ name: "Hwang" });
+
+//Object.prototype.hasOwnProperty는 프로토타입 메서드
+console.log(objst.hasOwnProperty("name")); //false
+
+function FooSt() {
+  //프로토타입 메서드
+  //this를 참조하지 않는 프로토타입 메서드는 정적 메서드로 변경해도 동일한 효과 얻을 수 있음
+  FooSt.prototype.x = function () {
+    console.log("x prototype");
+  };
+}
+const fooObj = new FooSt();
+//프로토타입 메서드를 호출하려면 인스턴스를 생성해야 함
+fooObj.x(); //x prototype
+
+//정적 메서드
+FooSt.x = function () {
+  console.log("x static");
+};
+
+//정적 메서드는 인스턴스를 생성하지 않아도 호출 가능
+FooSt.x(); //x static
+
+//프로퍼티 존재 확인
+const personin = {
+  name: "hwang",
+  address: "Seoul",
+};
+//personin 객체에 name 프로퍼티 존재
+console.log("name" in personin); // true
+
+//personin 객체에 address 프로퍼티 존재
+console.log("address" in personin); // true
+//personin 객체에 age 프로퍼티 존재x
+console.log("age" in personin); // false
+
+console.log("toString" in personin); // true
+
+console.log(Reflect.has(personin, "name")); //true
+console.log(Reflect.has(personin, "address")); //true
+
+console.log(personin.hasOwnProperty("name")); //true
+console.log(personin.hasOwnProperty("address")); //true
+console.log(personin.hasOwnProperty("toString")); //false
+
+//프로퍼티 열거
+
+//for... in 문의 변수 key에 personin 객체의 프로퍼티 키가 할당됨
+for (const key in personin) {
+  console.log(key + ":" + personin[key]);
+}
+//name:hwang
+//address:Seoul
+
+//in 연산자는 객체가 상속받은 모든 프로토타입의 프로퍼티를 확인함
+console.log("toString" in personin); //true
+
+//for... in 문도 객체가 상속받은 모든 프로토타입의 프로퍼티를 열거함
+//toString과 같은 Object.prototype의 프로퍼티는 열거되지 않음
+for (const key in personin) {
+  console.log(key + ":" + personin[key]);
+}
+
+//Object.getOwnPropertyDescriptor 메서드는 프로퍼티 디스크립터 객체를 반환함
+//프로퍼티 디스크립터 객체는 프로퍼티 어트리뷰트 정보를 담고 있는 객체
+console.log(Object.getOwnPropertyDescriptor(Object.prototype, "toString"));
+// {
+//     value: [Function: toString],
+//     writable: true,
+//     enumerable: false,
+//     configurable: true
+//   }
+
+const personfor = {
+  name: "hwang",
+  address: "Seoul",
+  __proto__: { age: 20 }, //프로토타입 체인에 연결된 객체
+};
+for (const key in personfor) {
+  console.log(key + ":" + personfor[key]);
+}
+// name:hwang
+// address:Seoul
+// age:20
+
+//Object.getOwnPropertyDescriptor는 직접 객체에 정의된 속성의 디스크립터만 반환하기 때문에,
+//__proto__는 직접 정의된 속성이 아니므로 반환되지 않는다
+const protoDescriptor = Object.getOwnPropertyDescriptor(personfor, "__proto__");
+console.log(protoDescriptor); // undefined
+
+const protoObject = Object.getPrototypeOf(personfor); // __proto__가 가리키는 객체
+console.log(protoObject); // { age: 20 }
+
+const ageDescriptor = Object.getOwnPropertyDescriptor(protoObject, "age");
+console.log(ageDescriptor);
+// { value: 20, writable: true, enumerable: true, configurable: true }
+
+console.log(Object.getOwnPropertyDescriptor(Object.prototype, "__proto__"));
+// {
+//     get: [Function: get __proto__],
+//     set: [Function: set __proto__],
+//     enumerable: false,
+//     configurable: true
+//   }
+
+const sym = Symbol();
+const objsym = {
+  a: 1,
+  [sym]: 10,
+};
+for (const key in objsym) {
+  console.log(key + ":" + objsym[key]);
+}
+//a:1
+
+//상속받은 프로퍼티는 제외하고 객체 자신의 프로퍼티만 열거하려면 Object.prototype.hasOwnProperty 메서드 사용
+//객체 자신의 프로퍼티인지 확인
+const person11 = {
+  name: "hwang",
+  address: "Seoul",
+  __proto__: { age: 20 }, //프로토타입 체인에 연결된 객체
+};
+for (const key in person11) {
+  //객체 자신의 프로퍼티인지 확인함
+  if (!person11.hasOwnProperty(key)) continue;
+  console.log(key + ":" + person11[key]);
+}
+// name:hwang
+// address:Seoul
+
+const objnxt = {
+  2: 2,
+  3: 3,
+  1: 1,
+  b: "b",
+  a: "a",
+};
+for (const key in objnxt) {
+  if (!objnxt.hasOwnProperty(key)) continue;
+  console.log(key + ":" + objnxt[key]);
+}
+// 1:1
+// 2:2
+// 3:3
+// b:b
+// a:a
+
+const arrfor = [1, 2, 3];
+arrfor.x = 10; //배열도 객체여서 프로퍼티 가질 수 있음, 상속받은 프로퍼티 포함될 수 있음
+for (const key in arrfor) {
+  //프로퍼티 x도 출력
+  console.log(key + ":" + arrfor[key]);
+  //   0:1
+  //   1:2
+  //   2:3
+  //   x:10
+}
+//arrfor.length는 3
+for (let i = 0; i < arrfor.length; i++) {
+  console.log(arrfor[i]); //1 2 3
+}
+//forEach 메서드는 요소가 아닌 프로퍼티는 제외함
+arrfor.forEach((v) => console.log(v)); //1 2 3
+
+//for...of는 변수 선언문에서 선언한 변수에 키가 아닌 값을 할당함
+for (const value of arrfor) {
+  console.log(value); //1 2 3
+}
+
+const person12 = {
+  name: "hwang",
+  address: "Seoul",
+  __proto__: { age: 20 }, //프로토타입 체인에 연결된 객체
+};
+console.log(Object.keys(person12)); //[ 'name', 'address' ]
+
+console.log(Object.values(person12)); //[ 'hwang', 'Seoul' ]
+
+console.log(Object.entries(person12)); //[ [ 'name', 'hwang' ], [ 'address', 'Seoul' ] ]
+Object.entries(person12).forEach(([key, value]) => console.log(key, value));
+// name hwang
+// address Seoul
