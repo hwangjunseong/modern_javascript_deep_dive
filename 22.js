@@ -144,11 +144,9 @@ const obj3 = {
       console.log("callback this", this); //window
       console.log("callback this.value", this.value); //1
     });
-
-    bar();
   },
 };
-
+obj3.foo();
 const obj4 = {
   value: 100,
   foo() {
